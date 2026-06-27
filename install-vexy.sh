@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PANEL_PATH="/var/www/pterodactyl"
-GITHUB_ZIP="https://raw.githubusercontent.com/CodeByCruel/AvtixTheme/main/Hyper-modified.zip"
+GITHUB_ZIP="https://github.com/CodeByCruel/AvtixTheme-1.14/releases/download/v1.14.0/AvtixTheme-Full-Source.zip"
 API_URL="https://vt-panel-api.vercel.app/api/index"
 THEME_DB_KEY="settings::app:theme:hyperv2"
 
