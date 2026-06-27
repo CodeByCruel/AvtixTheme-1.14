@@ -1103,17 +1103,32 @@ run_migrate() {
     echo "Running migrations..."
     cd "$PANEL_PATH"
     rm -f database/schema/mysql-schema.sql 2>/dev/null || true
-    # Skip problematic migration
+
+    # Pre-mark the store_node_tokens migration as done if the table already has the columns
+    # (migration tries to drop an index that may not exist with the expected name)
     php8.4 artisan tinker --execute="
-\$mig = new \Illuminate\Database\Migrations\Migrator(new \Illuminate\Database\Migrations\DatabaseMigrationRepository(\Illuminate\Support\Facades\DB::connection(), 'migrations'), \Illuminate\Support\Facades\DB::connection(), new \Illuminate\Filesystem\Filesystem());
+try {
+    \$cols = \Illuminate\Support\Facades\Schema::getColumnListing('nodes');
+    if (in_array('daemon_token', \$cols) && in_array('uuid', \$cols) && in_array('daemon_token_id', \$cols)) {
+        \$exists = \Illuminate\Support\Facades\DB::table('migrations')
+            ->where('migration', '2020_04_10_141024_store_node_tokens_as_encrypted_value')
+            ->whereNull('batch')
+            ->exists();
+        if (\$exists) {
+            \Illuminate\Support\Facades\DB::table('migrations')
+                ->where('migration', '2020_04_10_141024_store_node_tokens_as_encrypted_value')
+                ->update(['batch' => 99]);
+        }
+    }
+} catch (Exception \$e) {}
 " 2>/dev/null || true
+
     php8.4 artisan migrate --force 2>/dev/null || true
 
-    # Handle any stuck migrations
+    # Handle any other stuck migrations
     php8.4 artisan tinker --execute="
 try {
     \Illuminate\Support\Facades\DB::table('migrations')
-        ->where('migration', 'like', '%store_node_tokens%')
         ->whereNull('batch')
         ->update(['batch' => 99]);
 } catch (Exception \$e) {}
@@ -1597,8 +1612,8 @@ do_install() {
     rm -rf "$TMP"
 
     echo "[8/9] Configuring..."
-    configure_env
     install_deps
+    configure_env
     run_migrate
     create_admin
     fix_nginx
