@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class AddIpAlias extends Migration
+{
+    public function up()
+    {
+        Schema::table('allocations', function (Blueprint $table) {
+            $table->text('ip_alias')->nullable()->after('ip');
+        });
+
+        $allocations = DB::select('SELECT id, ip FROM allocations');
+        foreach ($allocations as $allocation) {
+            DB::update(
+                'UPDATE allocations SET ip_alias = :ip WHERE id = :id',
+                [
+                    'ip' => $allocation->ip,
+                    'id' => $allocation->id,
+                ]
+            );
+        }
+    }
+
+    public function down()
+    {
+        Schema::table('allocations', function (Blueprint $table) {
+            $table->dropColumn('ip_alias');
+        });
+    }
+}

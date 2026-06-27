@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class AddDatabasesTables extends Migration
+{
+    public function up()
+    {
+        Schema::create('databases', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('server')->unsigned();
+            $table->integer('db_server')->unsigned();
+            $table->string('database')->unique();
+            $table->string('username')->unique();
+            $table->string('remote')->default('%');
+            $table->text('password');
+            $table->timestamps();
+        });
+    }
+
+    public function down()
+    {
+        Schema::drop('databases');
+    }
+}
